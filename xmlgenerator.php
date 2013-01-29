@@ -4,7 +4,7 @@
  * An easy to read/tweak class for XML generation (Skroutz e.t.c)
  * For Virtuemart 2.0.18a / Joomla 2.5.8
  * @author  Drakakis George <lolly@lollypop.gr>
- * @copyright 2013 - lollypop.gr
+ * @copyright  Copyright (C) 20013 - 2012 lollypop.gr, Inc. All rights reserved.
 */
 class XmlGenerator {
 

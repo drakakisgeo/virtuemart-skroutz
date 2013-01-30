@@ -36,7 +36,7 @@ class XmlGenerator {
         $categories = $this->get_categories();
         $images = $this->get_images();
         $manufacturers = $this->get_manufacturers();
-        $products = $this->get_products(5);
+        $products = $this->get_products();
         // Start XML structure
         $xml = new SimpleXMLElement('<skroutzstore/>');
         $xml->addAttribute('name',STORENAME);

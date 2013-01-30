@@ -107,7 +107,6 @@ class XmlGenerator {
             $allitems = 0;
             while($c = $list->fetch(PDO::FETCH_ASSOC)){
                 $allitems++;
-                //$listItems[$c['id']] = $this->e($c['name']);
                 $data[] = array(
                     'id' => intval($c['virtuemart_product_id']),
                     'name' => $this->e($c['productname']),

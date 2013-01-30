@@ -1,33 +1,31 @@
 <?php
 
+include_once("setup.php");
+
 /**
  * An easy to read/tweak class for XML generation (Skroutz e.t.c)
  * For Virtuemart 2.0.18a / Joomla 2.5.8
  * @author  Drakakis George <lolly@lollypop.gr>
- * @copyright  Copyright (C) 20013 - 2012 lollypop.gr, Inc. All rights reserved.
+ * @copyright 2013 - lollypop.gr
 */
 class XmlGenerator {
 
-    //----- DB Details
-    const DBNAME = "dbname";
-    const DBUSER = "dbuser";
-    const DBPASS = "password";
-    const DBENCODING = "utf8";
-
-    // Store Constants
-    const STORENAME = "Your Store Name";
-    const STOREURL = "http://www.yourdomain.gr";
-
     // URLs
-    private $_basepath = "http://www.yourdomain.gr/";
-    private $_imagesPath = "http://www.yourdomain.gr/images/stories/virtuemart/product/";
-    private $_thumbFolder = "http://www.yourdomain.gr/images/stories/virtuemart/product/resized/";
+    private $_imagesPath;
+    private $_thumbFolder;
 
     // For Queries
-    private $_thumbSize = 120;
-    private $_dbPrefix = "fybv3_virtuemart_"; // WITH virtuemart_ at the end of the string
-    private $_lang = "el_gr"; // The language @ DB
+    private $_thumbSize;
+    private $_dbPrefix;
+    private $_lang;
 
+    public function __construct(){
+         $this->_imagesPath = BASEURL.'/images/stories/virtuemart/product/';
+         $this->_thumbFolder  = BASEURL.'/shownew/images/stories/virtuemart/product/resized/';
+         $this->_thumbSize  = THUMBSIZE;
+         $this->_dbPrefix  = DBPREFIX;
+         $this->_lang  = LANG;
+     }
 
     /**
      * Create XML structure
@@ -38,11 +36,11 @@ class XmlGenerator {
         $categories = $this->get_categories();
         $images = $this->get_images();
         $manufacturers = $this->get_manufacturers();
-        $products = $this->get_products();
+        $products = $this->get_products(5);
         // Start XML structure
         $xml = new SimpleXMLElement('<skroutzstore/>');
-        $xml->addAttribute('name',self::STORENAME);
-        $xml->addAttribute('url',self::STOREURL);
+        $xml->addAttribute('name',STORENAME);
+        $xml->addAttribute('url',STOREURL);
         $xml->addAttribute('total_products',$products['total_products']);
         $xml->addAttribute('encoding','utf8');
         $products_node = $xml->addChild('products');
@@ -80,7 +78,7 @@ class XmlGenerator {
         );
 
         try{
-            $DBH = new PDO("mysql:host=localhost;dbname=".self::DBNAME.";charset=".self::DBENCODING."", "".self::DBUSER."", "".self::DBPASS."");
+            $DBH = new PDO("mysql:host=localhost;dbname=".DBNAME.";charset=".DBENCODING."", "".DBUSER."", "".DBPASS."");
             $q = "SELECT
             p.*,
             dp.product_name as productname,
@@ -129,6 +127,7 @@ class XmlGenerator {
         // Parse all data to products array
         $products['data'] = $data;
         mysql_close($dbc);
+
         return $products;
     }
 
@@ -148,7 +147,7 @@ class XmlGenerator {
     public function get_categories(){
         $listItems = array();
         try{
-            $DBH = new PDO("mysql:host=localhost;dbname=".self::DBNAME.";charset=".self::DBENCODING."", "".self::DBUSER."", "".self::DBPASS."");
+            $DBH = new PDO("mysql:host=localhost;dbname=".DBNAME.";charset=".DBENCODING."", "".DBUSER."", "".DBPASS."");
             $q = "SELECT category_name as name,virtuemart_category_id as id FROM ".$this->_dbPrefix."categories_".$this->_lang;
 
             $list=$DBH->query($q) or die("failed!");
@@ -169,7 +168,7 @@ class XmlGenerator {
     public function get_manufacturers(){
        $listItems = array();
         try{
-            $DBH = new PDO("mysql:host=localhost;dbname=".self::DBNAME.";charset=".self::DBENCODING."", "".self::DBUSER."", "".self::DBPASS."");
+            $DBH = new PDO("mysql:host=localhost;dbname=".DBNAME.";charset=".DBENCODING."", "".DBUSER."", "".DBPASS."");
             $q = "SELECT mf_name as name,virtuemart_manufacturer_id as id FROM ".$this->_dbPrefix."manufacturers_".$this->_lang;
             $list =  $DBH->query($q) or die("failed!");
             while($c = $list->fetch(PDO::FETCH_ASSOC)){
@@ -189,7 +188,7 @@ class XmlGenerator {
     public function get_images(){
        $listItems = array();
         try{
-            $DBH = new PDO("mysql:host=localhost;dbname=".self::DBNAME.";charset=".self::DBENCODING."", "".self::DBUSER."", "".self::DBPASS."");
+            $DBH = new PDO("mysql:host=localhost;dbname=".DBNAME.";charset=".DBENCODING."", "".DBUSER."", "".DBPASS."");
             $q = "SELECT virtuemart_media_id as id,file_title as name FROM ".$this->_dbPrefix."medias WHERE file_mimetype='image/jpeg'";
             $list =  $DBH->query($q) or die("failed!");
             while($c = $list->fetch(PDO::FETCH_ASSOC)){
@@ -202,7 +201,6 @@ class XmlGenerator {
         }
         return $listItems;
     }
-
     /**
      * Create thumbnail
      * @param  string $filename
@@ -223,6 +221,7 @@ class XmlGenerator {
     public function get_url($product_id){
         return "index.php?option=com_virtuemart&view=productdetails&virtuemart_product_id=".$product_id;
     }
+
 
     /**
      * SEO path generator

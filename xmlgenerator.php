@@ -52,7 +52,7 @@ class XmlGenerator {
             $product_node = $products_node->addChild('product');
             $product_node->addAttribute('id',$item['id']);
             $product_node->addChild('name',$item['name']);
-            $product_node->addChild('link',$this->e($this->_basepath.$this->catpath($item['id'])));
+            $product_node->addChild('link',$this->e($this->_basepath.$this->get_url($item['id'])));
             $product_node->addChild('price_with_vat',number_format($item['price'], 2, ',', ''));
             $category_node = $product_node->addChild('category',$categories[$item['category_id']]); // change that
             $category_node->addAttribute('id',$item['category_id']); // change that
@@ -183,7 +183,10 @@ class XmlGenerator {
         }
         return $listItems;
     }
-
+    /**
+     * Get all images
+     * @return array
+     */
     public function get_images(){
        $listItems = array();
         try{
@@ -201,6 +204,11 @@ class XmlGenerator {
         return $listItems;
     }
 
+    /**
+     * Create thumbnail
+     * @param  string $filename
+     * @return string
+     */
     public function get_thumb($filename){
         $makeString = "_".$this->_thumbSize."x".$this->_thumbSize;
         $ext   = pathinfo($filename, PATHINFO_EXTENSION);
@@ -208,8 +216,22 @@ class XmlGenerator {
         return $this->_thumbFolder.$thumb;
     }
 
-    public function catpath($product_id){
+    /**
+     * Get the URL
+     * @param  integer $product_id
+     * @return string
+     */
+    public function get_url($product_id){
         return "index.php?option=com_virtuemart&view=productdetails&virtuemart_product_id=".$product_id;
+    }
+
+    /**
+     * SEO path generator
+     * @param  integer $catid
+     * @return string
+     */
+    public function get_catpath($catid){
+        //
     }
 
 }

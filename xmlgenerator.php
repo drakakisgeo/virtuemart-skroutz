@@ -18,13 +18,23 @@ class XmlGenerator {
     private $_thumbSize;
     private $_dbPrefix;
     private $_lang;
+    private $_categories=null;
+
+    // Cache Vars
+    public $cacheTime;
+    public $cachefile_exists = false;
+    public $cached_file;
+    public $createFile=0;
 
     public function __construct(){
          $this->_imagesPath = BASEURL.'/images/stories/virtuemart/product/';
-         $this->_thumbFolder  = BASEURL.'/shownew/images/stories/virtuemart/product/resized/';
+         $this->_thumbFolder  = BASEURL.'/images/stories/virtuemart/product/resized/';
          $this->_thumbSize  = THUMBSIZE;
          $this->_dbPrefix  = DBPREFIX;
          $this->_lang  = LANG;
+         $this->cacheTime = CACHETIME;
+         $this->cachefile_exists = $this->check_file();
+         $this->cached_file = XMLFILE.'.xml';
      }
 
     /**
@@ -33,10 +43,10 @@ class XmlGenerator {
      */
     public function create(){
         // Grab Data
-        $categories = $this->get_categories();
+        $this->get_categories();
         $images = $this->get_images();
         $manufacturers = $this->get_manufacturers();
-        $products = $this->get_products();
+        $products = $this->get_products(LIMITNUM);
         // Start XML structure
         $xml = new SimpleXMLElement('<skroutzstore/>');
         $xml->addAttribute('name',STORENAME);
@@ -50,9 +60,9 @@ class XmlGenerator {
             $product_node = $products_node->addChild('product');
             $product_node->addAttribute('id',$item['id']);
             $product_node->addChild('name',$item['name']);
-            $product_node->addChild('link',$this->e($this->_basepath.$this->get_url($item['id'])));
+            $product_node->addChild('link',BASEURL."/".$this->e($this->get_url($item['id'])));
             $product_node->addChild('price_with_vat',number_format($item['price'], 2, ',', ''));
-            $category_node = $product_node->addChild('category',$categories[$item['category_id']]); // change that
+            $category_node = $product_node->addChild('category',$this->get_catpath($item['category_id'],$this->_categories)); // change that
             $category_node->addAttribute('id',$item['category_id']); // change that
             $product_node->addChild('image',$this->_imagesPath.$images[$item['img_id']]);
             $product_node->addChild('thumbnail',$this->get_thumb($images[$item['img_id']]));
@@ -60,6 +70,10 @@ class XmlGenerator {
             $product_node->addChild('availability',$item['availability']);
             $product_node->addChild('stock',$item['stock']);
         }
+
+            if($this->createFile==1){ // store it to cache
+                $xml->asXML(XMLFILE.'.xml');
+            }
     return $xml;
     }
 
@@ -126,7 +140,6 @@ class XmlGenerator {
 
         // Parse all data to products array
         $products['data'] = $data;
-        mysql_close($dbc);
 
         return $products;
     }
@@ -140,27 +153,7 @@ class XmlGenerator {
     return str_replace(array("&", "<", ">", "\"", "'"),
         array("&amp;", "&lt;", "&gt;", "&quot;", "&apos;"), $string);
     }
-    /**
-     * Get list of ids and categories
-     * @return array
-     */
-    public function get_categories(){
-        $listItems = array();
-        try{
-            $DBH = new PDO("mysql:host=localhost;dbname=".DBNAME.";charset=".DBENCODING."", "".DBUSER."", "".DBPASS."");
-            $q = "SELECT category_name as name,virtuemart_category_id as id FROM ".$this->_dbPrefix."categories_".$this->_lang;
 
-            $list=$DBH->query($q) or die("failed!");
-            while($c = $list->fetch(PDO::FETCH_ASSOC)){
-                $listItems[$c['id']] = $this->e($c['name']);
-            }
-            $DBH = null;
-        }catch(PDOEXCEPTION $e){
-            echo $e->getMessage();
-            die();
-        }
-        return $listItems;
-    }
     /**
      * Get list of ids and Manufacture's names
      * @return array (key=id,value=name)
@@ -224,12 +217,68 @@ class XmlGenerator {
 
 
     /**
-     * SEO path generator
+     * Category path generator -- Currently supports only one level deep.
      * @param  integer $catid
      * @return string
      */
-    public function get_catpath($catid){
-        //
+    public function get_catpath($catid,$categories){
+        $parentid = $categories[$catid][1];
+        if($parentid!=0){
+            return $categories[$parentid][0]. " / ". $categories[$catid][0];
+        }else{
+            return $categories[$catid][0];
+        }
     }
 
+    /**
+     * Get Categories and Parent/child ids in a multi dimentional Array
+     * @return array
+     */
+    public function get_categories(){
+        $listItems = array();
+        try{
+            $DBH = new PDO("mysql:host=localhost;dbname=".DBNAME.";charset=".DBENCODING."", "".DBUSER."", "".DBPASS."");
+            $q = "SELECT cats.category_name as name, cats.virtuemart_category_id as id,
+                        scat.category_parent_id as pid
+                    FROM ".$this->_dbPrefix."categories_".$this->_lang. " as cats,
+                        fybv3_virtuemart_category_categories as scat
+                    WHERE scat.category_child_id = cats.virtuemart_category_id";
+
+            $list=$DBH->query($q) or die("failed!");
+            while($c = $list->fetch(PDO::FETCH_ASSOC)){
+                $listItems[$c['id']] = array($this->e($c['name']),$c['pid']);
+            }
+            $DBH = null;
+        }catch(PDOEXCEPTION $e){
+            echo $e->getMessage();
+            die();
+        }
+        $this->_categories = $listItems;
+        return $listItems;
+    }
+
+    /**
+     * Check if cache file is there
+     * @return boolean
+     */
+    private function check_file(){
+
+        if(file_exists(XMLFILE.'.xml')){
+            return true;
+         }else{
+            return false;
+         }
+    }
+
+    /**
+     * Check if Cache file needs update
+     * @return boolean
+     */
+    public function is_uptodate(){
+        if((time() - CACHETIME < filemtime(XMLFILE.'.xml'))) {
+            return true;
+        }else{
+            return false;
+        }
+    }
 }

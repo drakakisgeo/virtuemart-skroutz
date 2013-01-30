@@ -1,17 +1,27 @@
-# virtuemart-skroutz V. 0.1 BETA
+# Joomla/Virtuemart 2.0 Skroutz Generator V. 1.0 BETA
+==================
+Virtuemart XML generator for Skroutz.gr. A flexible, very light and easy to follow script that you can use to generate the XML file Skroutz.gr needs from e-stores. This scripts was tested with Joomla 2.5.8 and Virtuemart 2.0.18a
+
+
+## What can you do with it?
+==================
+- A very fast grab of all the products. 5.000 products generate 5-6 queries. This solution is by far the most light solution available.
+- Config file to set all the info you need.
+- You can limit the results for testing
+- There is a caching mechanism. You can set the time that your website regenerates/updates the xml file.
+
 ==================
 
-Virtuemart XML creator for Skroutz.gr.
-Feel free to suggest things. There is a lot of room for improvements here
+I am planning to do in the future:
 
-I am planning to
+ - Make the urls tag SEO friendly
+ - Protect file from not authorized access
+ - Support for more than one level of Depth in Category tag
 
- - Use a Cache mechanism
- - Make the urls SEO friendly
- - Faster queries / Low resources
- - Refactor the code for greater usability
+
 
 ## SETUP
+==================
 - Upload it to your website.
 - Open "setup.php" file and change the values according your website
 - Navigate to generate.php to get the xml structure.

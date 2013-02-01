@@ -281,4 +281,5 @@ class XmlGenerator {
             return false;
         }
     }
+
 }

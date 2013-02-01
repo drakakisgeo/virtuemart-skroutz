@@ -2,14 +2,14 @@
 
 // Setup Variables
 
-define("DBNAME","showtest");
-define("DBUSER","root");
-define("DBPASS","cr3at1ve");
+define("DBNAME","Your Database");
+define("DBUSER","You username");
+define("DBPASS","password");
 define("DBENCODING","utf8");
 
-define("STORENAME","Audio Show");
-define("STOREURL","http://www.audioshow.gr");
-define("BASEURL","http://www.demo.lollypop.gr/shownew");
+define("STORENAME","Store Name");
+define("STOREURL","http://www.yourdomain.gr");
+define("BASEURL","http://www.yourdomain.gr/demo");
 
 define("THUMBSIZE",120);
 define("DBPREFIX","fybv3_virtuemart_");

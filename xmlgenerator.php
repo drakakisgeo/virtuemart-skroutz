@@ -182,7 +182,7 @@ class XmlGenerator {
        $listItems = array();
         try{
             $DBH = new PDO("mysql:host=localhost;dbname=".DBNAME.";charset=".DBENCODING."", "".DBUSER."", "".DBPASS."");
-            $q = "SELECT virtuemart_media_id as id,file_title as name FROM ".$this->_dbPrefix."medias WHERE file_mimetype='image/jpeg'";
+            $q = "SELECT virtuemart_media_id as id,file_title as name FROM ".$this->_dbPrefix."medias WHERE file_mimetype='image/jpeg' OR file_mimetype='image/png' OR file_mimetype='image/gif'";
             $list =  $DBH->query($q) or die("failed!");
             while($c = $list->fetch(PDO::FETCH_ASSOC)){
                 $listItems[$c['id']] = $this->e($c['name']);

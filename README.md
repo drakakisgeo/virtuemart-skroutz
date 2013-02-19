@@ -15,7 +15,7 @@ Virtuemart XML generator for Skroutz.gr. A flexible, very light and easy to foll
 I am planning to do in the future:
 
  - Make the urls tag SEO friendly
- - Protect file from not authorized access
+ - Protect file from un-authorized access
  - Support for more than one level of Depth in Category tag
 
 

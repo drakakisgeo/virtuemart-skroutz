@@ -242,7 +242,7 @@ class XmlGenerator {
             $q = "SELECT cats.category_name as name, cats.virtuemart_category_id as id,
                         scat.category_parent_id as pid
                     FROM ".$this->_dbPrefix."categories_".$this->_lang. " as cats,
-                        ".$this->_dbPrefix."virtuemart_category_categories as scat
+                        ".$this->_dbPrefix."category_categories as scat
                     WHERE scat.category_child_id = cats.virtuemart_category_id";
 
             $list=$DBH->query($q) or die("failed!");

@@ -25,6 +25,9 @@ class XmlGenerator {
     public $cachefile_exists = false;
     public $cached_file;
     public $createFile=0;
+	
+	//NEW: for VAT value
+	public $vat_value;
 
     public function __construct(){
          $this->_imagesPath = BASEURL.'/images/stories/virtuemart/product/';
@@ -35,6 +38,7 @@ class XmlGenerator {
          $this->cacheTime = CACHETIME;
          $this->cachefile_exists = $this->check_file();
          $this->cached_file = XMLFILE.'.xml';
+		 $this->vat_val = VATNUM;  //NEW: for VAT value
      }
 
     /**
@@ -59,17 +63,23 @@ class XmlGenerator {
         foreach($products['data'] as $item){
             $product_node = $products_node->addChild('product');
             $product_node->addAttribute('id',$item['id']);
-            $product_node->addChild('name',$item['name']);
+            $product_node->addChild('name',$manufacturers[$item['manufacturer_id']].' '.$item['name']);  //NEW: Manufacturer in the main title
             $product_node->addChild('link',BASEURL."/".$this->e($this->get_url($item['id'])));
-            $product_node->addChild('price_with_vat',number_format($item['price'], 2, ',', ''));
+            $product_node->addChild('price_with_vat',number_format((($item['price'] * $this->vat_val) / 100) + $item['price'], 2, ',', '')); //NEW: Math exp to calculate the price with vat.
             $category_node = $product_node->addChild('category',$this->get_catpath($item['category_id'],$this->_categories)); // change that
             $category_node->addAttribute('id',$item['category_id']); // change that
             $product_node->addChild('image',$this->_imagesPath.$images[$item['img_id']]);
             $product_node->addChild('thumbnail',$this->get_thumb($images[$item['img_id']]));
             $product_node->addChild('manufacturer',$manufacturers[$item['manufacturer_id']]);
-            $product_node->addChild('availability',$item['availability']);
-            $product_node->addChild('stock',$item['stock']);
-        }
+			//NEW: Product availability
+			if ($item['stock']=="Y") {
+				$product_node->addChild('stock',$item['stock']);
+				$product_node->addChild('availability','Διαθέσιμο');
+			}else {
+				$product_node->addChild('stock',$item['stock']);
+				$product_node->addChild('availability','3 έως 5 ημέρες');			
+				}
+			} //NEW:
 
             if($this->createFile==1){ // store it to cache
                 $xml->asXML(XMLFILE.'.xml');
@@ -99,26 +109,28 @@ class XmlGenerator {
             dp.slug,cp.virtuemart_category_id as catid,
             pp.product_price as price,
             imp.virtuemart_media_id as imgid,
-            mp.virtuemart_manufacturer_id as manufacturer_id
+            mp.virtuemart_manufacturer_id as manufacturer_id 
             FROM
                 ".$this->_dbPrefix."products AS p,
                 ".$this->_dbPrefix."products_el_gr AS dp,
                 ".$this->_dbPrefix."product_categories as cp,
                 ".$this->_dbPrefix."product_prices as pp,
                 ".$this->_dbPrefix."product_medias as imp,
-                ".$this->_dbPrefix."product_manufacturers as mp
+                ".$this->_dbPrefix."product_manufacturers as mp 
             WHERE p.virtuemart_product_id = dp.virtuemart_product_id &&
                     p.published = 1 &&
                     cp.virtuemart_product_id = p.virtuemart_product_id &&
                     pp.virtuemart_product_id = p.virtuemart_product_id &&
                     imp.virtuemart_product_id = p.virtuemart_product_id &&
-                    mp.virtuemart_product_id = p.virtuemart_product_id
+                    mp.virtuemart_product_id = p.virtuemart_product_id 
                     ORDER BY p.virtuemart_product_id DESC
                      ".$limitText;
-            $list =  $DBH->query($q) or die("failed!");
+            $list =  $DBH->query($q) or die("DB failed!");
             $allitems = 0;
+			$sameID =0;
             while($c = $list->fetch(PDO::FETCH_ASSOC)){
                 $allitems++;
+				if (($sameID != $c['virtuemart_product_id']) xor ($sameCat != $c['catid'])){ //NEW: Check the same product ID & product category
                 $data[] = array(
                     'id' => intval($c['virtuemart_product_id']),
                     'name' => $this->e($c['productname']),
@@ -130,7 +142,10 @@ class XmlGenerator {
                     'manufacturer_id' => $c['manufacturer_id'],
                     'img_id'=> $c['imgid']
                     );
-            }
+					}
+					$sameID = $c['virtuemart_product_id']; //NEW: Variable of same product ID
+					$sameCat = $c['catid']; //NEW: Variable of same category ID
+				}
             $products['total_products'] = $allitems;
             $DBH = null;
         }catch(PDOEXCEPTION $e){
@@ -163,7 +178,7 @@ class XmlGenerator {
         try{
             $DBH = new PDO("mysql:host=localhost;dbname=".DBNAME.";charset=".DBENCODING."", "".DBUSER."", "".DBPASS."");
             $q = "SELECT mf_name as name,virtuemart_manufacturer_id as id FROM ".$this->_dbPrefix."manufacturers_".$this->_lang;
-            $list =  $DBH->query($q) or die("failed!");
+            $list =  $DBH->query($q) or die("Manufacturers failed!");
             while($c = $list->fetch(PDO::FETCH_ASSOC)){
                 $listItems[$c['id']] = $this->e($c['name']);
             }
@@ -245,7 +260,7 @@ class XmlGenerator {
                         ".$this->_dbPrefix."category_categories as scat
                     WHERE scat.category_child_id = cats.virtuemart_category_id";
 
-            $list=$DBH->query($q) or die("failed!");
+            $list=$DBH->query($q) or die("Categories failed!");
             while($c = $list->fetch(PDO::FETCH_ASSOC)){
                 $listItems[$c['id']] = array($this->e($c['name']),$c['pid']);
             }
